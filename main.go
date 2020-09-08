@@ -85,7 +85,6 @@ func (status *slackStatus) String() string {
 		expirationText = "<none>"
 	} else {
 		expirationText = time.Unix(status.StatusExpiration, 0).String()
-		// TODO: switch between minutes, hours, or days based on how long remains
 		timeRemaining := timeDurationInWords(time.Until(time.Unix(status.StatusExpiration, 0)))
 		expirationText = fmt.Sprintf("%v (%v from now)", expirationText, timeRemaining)
 	}
