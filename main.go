@@ -10,6 +10,7 @@ Slack status until 3:23pm: :salad: Lunch!
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -62,8 +63,11 @@ func main() {
 		StatusText:       message,
 		StatusExpiration: time.Now().Add(duration).Unix(),
 	}
-	fmt.Printf("=== New Status ===\n%v\n", newStatus.String())
+
 	// set new status
+	updatedStatus := setSlackStatus(newStatus)
+	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
+
 	if doNotDisturb {
 		// TODO: set DND
 	}
@@ -158,4 +162,44 @@ func getDefaultDuration() time.Duration {
 		log.Fatal(err)
 	}
 	return duration
+}
+
+func setSlackStatus(s slackStatus) slackStatus {
+	// POST /api/users.profile.set
+	// https://api.slack.com/methods/users.profile.set
+	var profile slackProfile
+	profile.Profile.slackStatus = s
+	profileJSON, err := json.Marshal(profile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(profileJSON))
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", "https://slack.com/api/users.profile.set", bytes.NewBuffer(profileJSON))
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+getSlackToken())
+	req.Header.Add("Content-type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+
+		log.Fatal(err)
+	}
+	var slackProfile slackProfile
+	err = json.Unmarshal(body, &slackProfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if slackProfile.Ok != true {
+		log.Fatal("Slack API error: " + slackProfile.Error)
+	}
+	return slackProfile.Profile.slackStatus
 }
