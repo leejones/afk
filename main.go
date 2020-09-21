@@ -30,8 +30,8 @@ var message string
 var doNotDisturb bool
 
 type slackAPIResponse struct {
-	Ok    bool   `json:"ok"`
-	Error string `json:"error"`
+	Ok    bool   `json:"ok,omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
 type slackProfile struct {
