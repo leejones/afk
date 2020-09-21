@@ -49,7 +49,7 @@ type slackStatus struct {
 
 func main() {
 	flag.StringVar(&message, "message", "Away from keyboard", "The message to display while AFK")
-	flag.StringVar(&emoji, "emoji", ":speech-bubble:", "Emoji to display while AFK")
+	flag.StringVar(&emoji, "emoji", ":speech_balloon:", "Emoji to display while AFK")
 	flag.DurationVar(&duration, "duration", getDefaultDuration(), "How long the AFK status should last")
 	flag.BoolVar(&doNotDisturb, "dnd", false, "Enable Do Not Disturb")
 	flag.Parse()
