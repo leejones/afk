@@ -163,7 +163,7 @@ func getSlackTokenFromFile(configFilePath string) string {
 	for scanner.Scan() {
 		text := scanner.Text()
 		splitText := strings.Split(text, ":")
-		if splitText[0] == "token" {
+		if splitText[0] == "slackToken" {
 			token = strings.Trim(splitText[1], " ")
 			break
 		}
