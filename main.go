@@ -55,8 +55,9 @@ func main() {
 	flag.BoolVar(&doNotDisturb, "dnd", false, "Enable Do Not Disturb")
 	flag.Parse()
 
-	currentStatus := getCurrentStatus()
-	fmt.Printf("=== Current Status ===\n%v\n", currentStatus.String())
+	originalStatus := getCurrentStatus()
+	fmt.Printf("=== Current Status ===\n%v\n", originalStatus.String())
+	fmt.Println("")
 
 	newStatus := slackStatus{
 		StatusEmoji:      emoji,
@@ -67,12 +68,26 @@ func main() {
 	// set new status
 	updatedStatus := setSlackStatus(newStatus)
 	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
-
+	fmt.Println("")
 	if doNotDisturb {
 		// TODO: set DND
 	}
-	// wait for expiration or input
-	// replace previous status
+
+	fmt.Println("=== Press a key to continue ===")
+	fmt.Println("e        - exit program (continue with new status)")
+	fmt.Println("<enter>  - exit program (return to previous status)")
+	input := bufio.NewScanner(os.Stdin)
+	input.Scan()
+	if input.Text() == "e" {
+		os.Exit(0)
+	} else if input.Text() == "" {
+		_ = setSlackStatus(originalStatus)
+		os.Exit(0)
+	} else {
+		fmt.Println("ERROR: Unknown option:")
+		fmt.Println(input.Text())
+		os.Exit(1)
+	}
 }
 
 func (status *slackStatus) String() string {
