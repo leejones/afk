@@ -20,8 +20,8 @@ A CLI to update your Slack status.
   1. `users.profile:write`
 1. At the top of the page, click **Install to Workspace** and go through the OAuth flow
 1. From the top of the page, copy the **OAuth Access Token**
-1. On your computer, create a new file at `~/.afk-slack.yml`
-1. Set limited permissions so it's not viewable by others: `chmod 600 ~/.afk-slack.yml`
+1. On your computer, create a new file at `~/.afk.yml`
+1. Set limited permissions so it's not viewable by others: `chmod 600 ~/.afk.yml`
 1. Edit the file and add the OAuth Access Token you copied earlier in the following format:
 
 ```

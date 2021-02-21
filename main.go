@@ -131,7 +131,7 @@ func getCurrentStatus() slackStatus {
 func getSlackToken() string {
 	token := os.Getenv("SLACK_API_TOKEN")
 	if token == "" {
-		configFilePath := path.Join(os.Getenv("HOME"), ".afk-slack.yml")
+		configFilePath := path.Join(os.Getenv("HOME"), ".afk.yml")
 		token = getSlackTokenFromFile(configFilePath)
 		if token == "" {
 			log.Fatal("Could not find a Slack API token. Checked ENV var: $SLACK_API_TOKEN and file: " + configFilePath)
