@@ -1,13 +1,5 @@
 package main
 
-/*
-
-$> afk --message "Lunch!" --emoji ":salad:" --duration "1h"
-Slack status until 3:23pm: :salad: Lunch!
-<press any key to stop>
-
-*/
-
 import (
 	"bufio"
 	"bytes"
