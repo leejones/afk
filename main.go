@@ -196,7 +196,6 @@ func setSlackStatus(s slackStatus) slackStatus {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-
 		log.Fatal(err)
 	}
 	var slackProfile slackProfile
