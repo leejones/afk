@@ -33,6 +33,7 @@ type slackProfile struct {
 		slackStatus
 	} `json:"profile"`
 }
+
 type slackStatus struct {
 	StatusText  string `json:"status_text"` // max 100 chars
 	StatusEmoji string `json:"status_emoji"`
