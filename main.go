@@ -181,7 +181,6 @@ func setSlackStatus(s slackStatus) slackStatus {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(profileJSON))
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", "https://slack.com/api/users.profile.set", bytes.NewBuffer(profileJSON))
