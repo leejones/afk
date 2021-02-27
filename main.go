@@ -191,7 +191,6 @@ func setSlackStatus(s slackStatus) slackStatus {
 	req.Header.Add("Content-type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
