@@ -61,10 +61,11 @@ func main() {
 	// set new status
 	updatedStatus := setSlackStatus(newStatus)
 	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
-	fmt.Println("")
 	if doNotDisturb {
-		// TODO: set DND
+		setSlackDndSnooze(int(duration.Minutes()))
+		fmt.Println("DND: On (Zzzzz)")
 	}
+	fmt.Println("")
 
 	fmt.Println("=== Press a key to continue ===")
 	fmt.Println("e        - exit program (continue with new status)")
@@ -75,6 +76,9 @@ func main() {
 		os.Exit(0)
 	} else if input.Text() == "" {
 		_ = setSlackStatus(originalStatus)
+		if doNotDisturb {
+			endSlackDndSnooze()
+		}
 		os.Exit(0)
 	} else {
 		fmt.Println("ERROR: Unknown option:")
@@ -207,4 +211,59 @@ func setSlackStatus(s slackStatus) slackStatus {
 		log.Fatal("Slack API error: " + slackProfile.Error)
 	}
 	return slackProfile.Profile.slackStatus
+}
+
+func setSlackDndSnooze(minutes int) {
+	client := &http.Client{}
+	// docs: https://api.slack.com/methods/dnd.setSnooze
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://slack.com/api/dnd.setSnooze?num_minutes=%d", minutes), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+getSlackToken())
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var slackAPIResponse slackAPIResponse
+	err = json.Unmarshal(body, &slackAPIResponse)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if slackAPIResponse.Ok != true {
+		log.Fatal("Slack API error: " + slackAPIResponse.Error)
+	}
+}
+
+func endSlackDndSnooze() {
+	client := &http.Client{}
+	// docs: https://api.slack.com/methods/dnd.endSnooze
+	req, err := http.NewRequest("POST", "https://slack.com/api/dnd.endSnooze", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Authorization", "Bearer "+getSlackToken())
+	req.Header.Add("Content-type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var slackAPIResponse slackAPIResponse
+	err = json.Unmarshal(body, &slackAPIResponse)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if slackAPIResponse.Ok != true && slackAPIResponse.Error != "snooze_not_active" {
+		log.Fatal("Slack API error: " + slackAPIResponse.Error)
+	}
 }
