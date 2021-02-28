@@ -61,10 +61,14 @@ func main() {
 	// set new status
 	updatedStatus := setSlackStatus(newStatus)
 	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
-	fmt.Println("")
 	if doNotDisturb {
-		// TODO: set DND
+		err := setSlackDndSnooze(int(duration.Minutes()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("DND: On (Zzzzz)")
 	}
+	fmt.Println("")
 
 	fmt.Println("=== Press a key to continue ===")
 	fmt.Println("e        - exit program (continue with new status)")
@@ -75,6 +79,12 @@ func main() {
 		os.Exit(0)
 	} else if input.Text() == "" {
 		_ = setSlackStatus(originalStatus)
+		if doNotDisturb {
+			err := endSlackDndSnooze()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		os.Exit(0)
 	} else {
 		fmt.Println("ERROR: Unknown option:")
@@ -207,4 +217,61 @@ func setSlackStatus(s slackStatus) slackStatus {
 		log.Fatal("Slack API error: " + slackProfile.Error)
 	}
 	return slackProfile.Profile.slackStatus
+}
+
+func setSlackDndSnooze(minutes int) error {
+	client := &http.Client{}
+	// docs: https://api.slack.com/methods/dnd.setSnooze
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://slack.com/api/dnd.setSnooze?num_minutes=%d", minutes), nil)
+	if err != nil {
+		return fmt.Errorf("Error constructing dnd.setSnooze API request: %w", err)
+	}
+	req.Header.Add("Authorization", "Bearer "+getSlackToken())
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error during dnd.setSnooze API request: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading dnd.setSnooze API response body: %w", err)
+	}
+	var slackAPIResponse slackAPIResponse
+	err = json.Unmarshal(body, &slackAPIResponse)
+	if err != nil {
+		return fmt.Errorf("Error parsing dnd.setSnooze API response: %w", err)
+	}
+	if slackAPIResponse.Ok != true {
+		return fmt.Errorf("Error in dnd.setSnooze API response: %s", slackAPIResponse.Error)
+	}
+	return nil
+}
+
+func endSlackDndSnooze() error {
+	client := &http.Client{}
+	// docs: https://api.slack.com/methods/dnd.endSnooze
+	req, err := http.NewRequest("POST", "https://slack.com/api/dnd.endSnooze", nil)
+	if err != nil {
+		return fmt.Errorf("Error constructing dnd.endSnooze API request: %w", err)
+	}
+	req.Header.Add("Authorization", "Bearer "+getSlackToken())
+	req.Header.Add("Content-type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error during dnd.endSnooze API request: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading dnd.endSnooze API response body: %w", err)
+	}
+	var slackAPIResponse slackAPIResponse
+	err = json.Unmarshal(body, &slackAPIResponse)
+	if err != nil {
+		return fmt.Errorf("Error parsing dnd.endSnooze API response: %w", err)
+	}
+	if slackAPIResponse.Ok != true && slackAPIResponse.Error != "snooze_not_active" {
+		return fmt.Errorf("Error in dnd.endSnooze API response: %w", err)
+	}
+	return nil
 }

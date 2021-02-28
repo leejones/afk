@@ -16,6 +16,8 @@ A CLI to update your Slack status.
 1. Enter a name (e.g. afk-tool) and select the relevant workspace
 1. Click **OAuth & Permissions** in the left sidebar
 1. Under **User Token Scopes** add the following scopes
+  1. `dnd:read`
+  1. `dnd:write`
   1. `users.profile:read`
   1. `users.profile:write`
 1. At the top of the page, click **Install to Workspace** and go through the OAuth flow
