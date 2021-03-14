@@ -41,6 +41,10 @@ type slackStatus struct {
 	StatusExpiration int64 `json:"status_expiration"`
 }
 
+type stopEvent struct {
+	resumePreviousStatus bool
+}
+
 func main() {
 	flag.StringVar(&message, "message", "Away from keyboard", "The message to display while AFK")
 	flag.StringVar(&emoji, "emoji", ":speech_balloon:", "Emoji to display while AFK")
@@ -70,14 +74,36 @@ func main() {
 	}
 	fmt.Println("")
 
-	fmt.Println("=== Press a key to continue ===")
-	fmt.Println("e        - exit program (continue with new status)")
-	fmt.Println("<enter>  - exit program (return to previous status)")
-	input := bufio.NewScanner(os.Stdin)
-	input.Scan()
-	if input.Text() == "e" {
-		os.Exit(0)
-	} else if input.Text() == "" {
+	stopEvents := make(chan stopEvent)
+
+	go func() {
+		fmt.Println("=== Press a key to continue ===")
+		fmt.Println("e        - exit program (continue with new status)")
+		fmt.Println("<enter>  - exit program (return to previous status)")
+		input := bufio.NewScanner(os.Stdin)
+		input.Scan()
+		if input.Text() == "e" {
+			stopEvents <- stopEvent{resumePreviousStatus: false}
+		} else if input.Text() == "" {
+			stopEvents <- stopEvent{resumePreviousStatus: true}
+		} else {
+			fmt.Println("ERROR: Unknown option:")
+			fmt.Println(input.Text())
+			os.Exit(1)
+		}
+	}()
+
+	go func() {
+		time.Sleep(duration)
+		fmt.Println("New status expired")
+		stopEvents <- stopEvent{resumePreviousStatus: true}
+	}()
+
+	stopEvent := <-stopEvents
+	fmt.Println("")
+	fmt.Println("=== afk session complete ===")
+	if stopEvent.resumePreviousStatus {
+		fmt.Println("Resuming previous status")
 		_ = setSlackStatus(originalStatus)
 		if doNotDisturb {
 			err := endSlackDndSnooze()
@@ -85,11 +111,6 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		os.Exit(0)
-	} else {
-		fmt.Println("ERROR: Unknown option:")
-		fmt.Println(input.Text())
-		os.Exit(1)
 	}
 }
 
