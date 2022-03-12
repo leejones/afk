@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -74,7 +75,7 @@ func main() {
 	}
 	fmt.Println("")
 
-	stopEvents := make(chan stopEvent)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		fmt.Println("=== Press a key to continue ===")
@@ -83,34 +84,32 @@ func main() {
 		input := bufio.NewScanner(os.Stdin)
 		input.Scan()
 		if input.Text() == "e" {
-			stopEvents <- stopEvent{resumePreviousStatus: false}
+			cancel()
 		} else if input.Text() == "" {
-			stopEvents <- stopEvent{resumePreviousStatus: true}
+			fmt.Println("Resuming previous status")
+			_ = setSlackStatus(originalStatus)
+			if doNotDisturb {
+				err := endSlackDndSnooze()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			cancel()
 		} else {
-			fmt.Println("ERROR: Unknown option:")
-			fmt.Println(input.Text())
+			fmt.Printf("ERROR: Unknown option: %s\n", input.Text())
 			os.Exit(1)
 		}
 	}()
 
-	go func() {
-		time.Sleep(duration)
+	select {
+	case <-time.After(duration):
+		fmt.Println("")
 		fmt.Println("New status expired")
-		stopEvents <- stopEvent{resumePreviousStatus: true}
-	}()
-
-	stopEvent := <-stopEvents
-	fmt.Println("")
-	fmt.Println("=== afk session complete ===")
-	if stopEvent.resumePreviousStatus {
-		fmt.Println("Resuming previous status")
-		_ = setSlackStatus(originalStatus)
-		if doNotDisturb {
-			err := endSlackDndSnooze()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+		fmt.Println("")
+		fmt.Println("=== afk session complete ===")
+	case <-ctx.Done():
+		fmt.Println("")
+		fmt.Println("=== afk session complete ===")
 	}
 }
 
