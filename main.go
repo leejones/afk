@@ -52,6 +52,10 @@ func main() {
 	flag.BoolVar(&doNotDisturb, "dnd", false, "Enable Do Not Disturb")
 	flag.Parse()
 
+	endTime := time.Now().Add(duration)
+	// By default, Go uses a monotonic clock for measuring time. However if the computer goes to sleep during an afk session, the monotonic clock may stop. This will cause the afk session to end later than the user expected. Therefore, we remove the monotonic time value so that calculations will use the wall clock time will be used instead. The canonical way to strip a monotonic clock reading is to use t = t.Round(0). See https://pkg.go.dev/time for more information.
+	endTime = endTime.Round(0)
+
 	originalStatus := getCurrentStatus()
 	fmt.Printf("=== Current Status ===\n%v\n", originalStatus.String())
 	fmt.Println("")
@@ -59,7 +63,7 @@ func main() {
 	newStatus := slackStatus{
 		StatusEmoji:      emoji,
 		StatusText:       message,
-		StatusExpiration: time.Now().Add(duration).Unix(),
+		StatusExpiration: endTime.Unix(),
 	}
 
 	// set new status
@@ -94,7 +98,13 @@ func main() {
 	}()
 
 	go func() {
-		time.Sleep(duration)
+		time.Sleep(time.Second)
+		for {
+			if time.Now().After(endTime) {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
 		fmt.Println("New status expired")
 		stopEvents <- stopEvent{resumePreviousStatus: true}
 	}()
