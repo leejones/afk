@@ -13,14 +13,15 @@ A CLI to update your Slack status.
 
 1. Go to your [Slack apps](https://api.slack.com/apps) page
 1. Click **Create New App**
+1. Click **From scratch**
 1. Enter a name (e.g. afk-tool) and select the relevant workspace
 1. Click **OAuth & Permissions** in the left sidebar
 1. Under **User Token Scopes** add the following scopes
-  1. `dnd:read`
-  1. `dnd:write`
-  1. `users.profile:read`
-  1. `users.profile:write`
-1. At the top of the page, click **Install to Workspace** and go through the OAuth flow
+    1. `dnd:read`
+    1. `dnd:write`
+    1. `users.profile:read`
+    1. `users.profile:write`
+1. At the top of the page, click **Install to `your_workspace_name`** and go through the OAuth flow
 1. From the top of the page, copy the **OAuth Access Token**
 1. On your computer, create a new file at `~/.afk.yml`
 1. Set limited permissions so it's not viewable by others: `chmod 600 ~/.afk.yml`
