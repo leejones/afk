@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -21,6 +22,13 @@ var emoji string
 var duration time.Duration
 var message string
 var doNotDisturb bool
+var versionRequested bool
+
+// Version info that can be set using -ldflags when building binaries. See bin/release for details.
+var buildDate = "unset"
+var gitCommit = "unset"
+var gitTreeState = "unset"
+var version = "unset"
 
 type slackAPIResponse struct {
 	Ok    bool   `json:"ok,omitempty"`
@@ -50,7 +58,13 @@ func main() {
 	flag.StringVar(&emoji, "emoji", ":speech_balloon:", "Emoji to display while AFK")
 	flag.DurationVar(&duration, "duration", getDefaultDuration(), "How long the AFK status should last")
 	flag.BoolVar(&doNotDisturb, "dnd", false, "Enable Do Not Disturb")
+	flag.BoolVar(&versionRequested, "version", false, "Show version info for afk")
 	flag.Parse()
+
+	if versionRequested {
+		printVersion()
+		os.Exit(0)
+	}
 
 	endTime := time.Now().Add(duration)
 	// By default, Go uses a monotonic clock for measuring time. If the computer goes to sleep during an afk session, the monotonic clock may stop. When the computer wakes, the monotonic clock will resume from where it stopped. This will cause the afk session to end later than the user expected since the duration that the computer was sleeping is not counted toward the afk session. Therefore, we remove the monotonic time value so that calculations will use the wall clock time instead. The canonical way to strip a monotonic clock reading is to use t = t.Round(0). See https://pkg.go.dev/time for more information.
@@ -304,4 +318,12 @@ func endSlackDndSnooze() error {
 		return fmt.Errorf("Error in dnd.endSnooze API response: %w", err)
 	}
 	return nil
+}
+
+func printVersion() {
+	fmt.Println("Version:", version)
+	fmt.Println("BuildDate:", buildDate)
+	fmt.Println("GitCommit:", gitCommit)
+	fmt.Println("GitTreeState:", gitTreeState)
+	fmt.Println("GoVersion:", runtime.Version())
 }
