@@ -102,7 +102,7 @@ func main() {
 			if time.Now().After(endTime) {
 				break
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Second)
 		}
 		fmt.Println("New status expired")
 		stopEvents <- stopEvent{resumePreviousStatus: true}
