@@ -38,3 +38,35 @@ afk --duration 1h --emoji :sandwich: --message "Lunch!"
 ```
 
 For more details, run `afk --help`.
+
+## Creating a new release
+
+This is the standard release process for maintainers.
+
+1. Install `gh` (the [GitHub CLI](https://cli.github.com)) if you don't have it already.
+1. Note the most recent release version:
+
+    ```bash
+    gh release list --limit 1
+    ```
+
+1. Locally, checkout the `main` branch to the latest revision.
+1. Set the version variable for the new release (in the form `vX.Y.Z`):
+
+    ```bash
+    read -p "Enter the new version (e.g., v1.2.3): " VERSION
+    ```
+
+1. Run the release script:
+
+    ```bash
+    bin/release $VERSION
+    ```
+
+1. Create the release using the GitHub CLI:
+
+    ```bash
+    gh release create $VERSION $(find "releases/${VERSION}/targets" -name "*.tar.gz") \
+      --title "Release $VERSION" \
+      --generate-notes
+    ```
