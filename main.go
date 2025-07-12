@@ -53,7 +53,7 @@ func main() {
 	flag.Parse()
 
 	endTime := time.Now().Add(duration)
-	// By default, Go uses a monotonic clock for measuring time. However if the computer goes to sleep during an afk session, the monotonic clock may stop. This will cause the afk session to end later than the user expected. Therefore, we remove the monotonic time value so that calculations will use the wall clock time will be used instead. The canonical way to strip a monotonic clock reading is to use t = t.Round(0). See https://pkg.go.dev/time for more information.
+	// By default, Go uses a monotonic clock for measuring time. If the computer goes to sleep during an afk session, the monotonic clock may stop. When the computer wakes, the monotonic clock will resume from where it stopped. This will cause the afk session to end later than the user expected since the duration that the computer was sleeping is not counted toward the afk session. Therefore, we remove the monotonic time value so that calculations will use the wall clock time instead. The canonical way to strip a monotonic clock reading is to use t = t.Round(0). See https://pkg.go.dev/time for more information.
 	endTime = endTime.Round(0)
 
 	originalStatus := getCurrentStatus()
