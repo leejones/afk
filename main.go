@@ -98,7 +98,6 @@ func main() {
 	}()
 
 	go func() {
-		time.Sleep(time.Second)
 		for {
 			if time.Now().After(endTime) {
 				break
