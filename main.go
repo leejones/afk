@@ -80,7 +80,7 @@ func main() {
 		StatusExpiration: endTime.Unix(),
 	}
 
-	// set new status
+	// Set new Slack status.
 	updatedStatus := setSlackStatus(newStatus)
 	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
 	if doNotDisturb {
@@ -94,6 +94,7 @@ func main() {
 
 	stopEvents := make(chan stopEvent)
 
+	// Launch terminal UI.
 	go func() {
 		fmt.Println("=== Press a key to continue ===")
 		fmt.Println("e        - exit program (continue with new status)")
@@ -111,6 +112,7 @@ func main() {
 		}
 	}()
 
+	// Launch timer for automatic status expiration.
 	go func() {
 		for {
 			if time.Now().After(endTime) {
@@ -122,6 +124,7 @@ func main() {
 		stopEvents <- stopEvent{resumePreviousStatus: true}
 	}()
 
+	// Handle stop events and update Slack status accordingly.
 	stopEvent := <-stopEvents
 	fmt.Println("")
 	fmt.Println("=== afk session complete ===")
@@ -137,6 +140,7 @@ func main() {
 	}
 }
 
+// String returns a human-friendly text version of the slackStatus.
 func (status *slackStatus) String() string {
 	emoji := status.StatusEmoji
 	if emoji == "" {
@@ -156,6 +160,8 @@ func (status *slackStatus) String() string {
 	}
 	return fmt.Sprintf("Emoji: %v\nText: %v\nExpires: %v", emoji, text, expirationText)
 }
+
+// getCurrentStatus calls the Slack API and returns the current slackStatus.
 func getCurrentStatus() slackStatus {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://slack.com/api/users.profile.get", nil)
@@ -183,6 +189,9 @@ func getCurrentStatus() slackStatus {
 	return slackProfile.Profile.slackStatus
 }
 
+// getSlackToken fetches the Slack API Token. It checks the following possible locations and returns the first one that contains a value:
+// * SLACK_API_TOKEN env variable.
+// * A file located at $HOME/.afk.yml.
 func getSlackToken() string {
 	token := os.Getenv("SLACK_API_TOKEN")
 	if token == "" {
@@ -196,6 +205,10 @@ func getSlackToken() string {
 	return token
 }
 
+// getSlackTokenFromFile reads the Slack API Token from the given file.  It expects the file to be in the following key/value format:
+// ```
+// slackToken: YOUR_API_TOKEN_HERE
+// ```
 func getSlackTokenFromFile(configFilePath string) string {
 	token := ""
 	_, err := os.Stat(configFilePath)
@@ -218,6 +231,7 @@ func getSlackTokenFromFile(configFilePath string) string {
 	return token
 }
 
+// getDefaultDuration returns the defaultDuration constant as a time.Duration
 func getDefaultDuration() time.Duration {
 	duration, err := time.ParseDuration(defaultDuration)
 	if err != nil {
@@ -226,6 +240,7 @@ func getDefaultDuration() time.Duration {
 	return duration
 }
 
+// setSlackStatus uses the Slack API to update the user's status.
 func setSlackStatus(s slackStatus) slackStatus {
 	// POST /api/users.profile.set
 	// https://api.slack.com/methods/users.profile.set
@@ -263,6 +278,7 @@ func setSlackStatus(s slackStatus) slackStatus {
 	return slackProfile.Profile.slackStatus
 }
 
+// setSlackDndSnooze uses the Slack API to enable Do Not Disturb for the given number of minutes.
 func setSlackDndSnooze(minutes int) error {
 	client := &http.Client{}
 	// docs: https://api.slack.com/methods/dnd.setSnooze
@@ -291,6 +307,7 @@ func setSlackDndSnooze(minutes int) error {
 	return nil
 }
 
+// endSlackDndSnooze uses the Slack API to disable Do Not Disturb.  endSlackDndSnooze is idempotent and will not return an error if Do Not Disturb is already disabled.
 func endSlackDndSnooze() error {
 	client := &http.Client{}
 	// docs: https://api.slack.com/methods/dnd.endSnooze
@@ -320,6 +337,7 @@ func endSlackDndSnooze() error {
 	return nil
 }
 
+// printVersion writes version information to STDOUT.
 func printVersion() {
 	fmt.Println("Version:", version)
 	fmt.Println("BuildDate:", buildDate)
