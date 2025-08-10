@@ -156,6 +156,7 @@ func (status *slackStatus) String() string {
 	}
 	return fmt.Sprintf("Emoji: %v\nText: %v\nExpires: %v", emoji, text, expirationText)
 }
+
 func getCurrentStatus() slackStatus {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://slack.com/api/users.profile.get", nil)
