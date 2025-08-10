@@ -80,7 +80,7 @@ func main() {
 		StatusExpiration: endTime.Unix(),
 	}
 
-	// set new status
+	// Set new Slack status.
 	updatedStatus := setSlackStatus(newStatus)
 	fmt.Printf("=== New Status ===\n%v\n", updatedStatus.String())
 	if doNotDisturb {
@@ -94,6 +94,7 @@ func main() {
 
 	stopEvents := make(chan stopEvent)
 
+	// Launch terminal UI.
 	go func() {
 		fmt.Println("=== Press a key to continue ===")
 		fmt.Println("e        - exit program (continue with new status)")
@@ -111,6 +112,7 @@ func main() {
 		}
 	}()
 
+	// Launch timer for automatic status expiration.
 	go func() {
 		for {
 			if time.Now().After(endTime) {
@@ -122,6 +124,7 @@ func main() {
 		stopEvents <- stopEvent{resumePreviousStatus: true}
 	}()
 
+	// Handle stop events and update Slack status accordingly.
 	stopEvent := <-stopEvents
 	fmt.Println("")
 	fmt.Println("=== afk session complete ===")
